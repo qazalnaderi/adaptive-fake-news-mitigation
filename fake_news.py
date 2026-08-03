@@ -19,7 +19,7 @@ class SimulationConfig:
 
     fixed_fact_checker_ratio: float = 0.25
     min_fact_checker_ratio: float = 0.05
-    max_fact_checker_ratio: float = 0.35
+    max_fact_checker_ratio: float = 0.50
     adaptive_gain: float = 0.70
 
 @dataclass(frozen=True)
