@@ -270,43 +270,56 @@ def step_async(
 
     opinion[u] = opinion[selected_neighbor]
 
-def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
-
+def run_baseline_targeted(
+    env: SimulationEnvironment,
+    config: SimulationConfig,
+    seed_init=7,
+    seed_run=11,
+    placement="degree",
+):
     opinion, C_set = initialize(
-        ENV,
+        env,
         seed=seed_init,
-        pC0=CONFIG.fixed_fact_checker_ratio,
+        pC0=config.fixed_fact_checker_ratio,
         mode=placement,
     )
+
     rng = random.Random(seed_run)
 
-    histA, histB, hist_pC = [], [], []
+    histA = []
+    histB = []
+    hist_pC = []
 
-    for t in range(CONFIG.steps):
+    for t in range(config.steps):
         step_async(
-            ENV,
-            CONFIG,
+            env,
+            config,
             opinion,
             C_set,
             rng,
         )
 
-        if t % CONFIG.sample_interval == 0:
-            A = sum(
+        if t % config.sample_interval == 0:
+            true_news_count = sum(
                 1
-                for u in ENV.nodes
-                if u not in C_set and opinion[u] == "A"
+                for node in env.nodes
+                if node not in C_set
+                and opinion[node] == "A"
             )
 
-            B = sum(
+            fake_news_count = sum(
                 1
-                for u in ENV.nodes
-                if u not in C_set and opinion[u] == "B"
+                for node in env.nodes
+                if node not in C_set
+                and opinion[node] == "B"
             )
 
-            histA.append(A)
-            histB.append(B)
-            hist_pC.append(len(C_set) / ENV.num_nodes)
+            histA.append(true_news_count)
+            histB.append(fake_news_count)
+
+            hist_pC.append(
+                len(C_set) / env.num_nodes
+            )
 
     return histA, histB, hist_pC
 
@@ -371,7 +384,11 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
 
 PLACEMENT = "degree"  
 
-A_base, B_base, p_base = run_baseline_targeted(placement=PLACEMENT)
+A_base, B_base, p_base = run_baseline_targeted(
+    ENV,
+    CONFIG,
+    placement=PLACEMENT,
+)
 A_up,   B_up,   p_up   = run_upgrade(baseline_placement=PLACEMENT)
 
 plt.figure(figsize=(12, 5))
