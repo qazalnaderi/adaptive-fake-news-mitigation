@@ -22,7 +22,7 @@ class SimulationConfig:
     min_fact_checker_ratio: float = 0.05
     max_fact_checker_ratio: float = 0.50
     adaptive_gain: float = 0.70
-
+    boundary_epsilon: float = 1e-12
 
 @dataclass(frozen=True)
 class SimulationEnvironment:
@@ -152,43 +152,58 @@ def fitness(
 
 def choose_C_boundary(
     env: SimulationEnvironment,
+    config: SimulationConfig,
     opinion,
     C_set,
     pC_current,
 ):
     """
-    Place fact-checkers on the boundary between fake-news
-    and non-fake-news regions.
+    Select non-fact-checker nodes with the highest normalized
+    boundary-interface scores.
 
-    score(v) = (# B neighbors) * (# A neighbors)
-
-    Current fact-checkers are excluded from boundary detection.
+    score(v) =
+        n_B(v) * n_A(v) / (degree(v) + epsilon)^2
     """
-    num_fact_checkers = int(
-        round(pC_current * env.num_nodes)
+    num_fact_checkers = math.floor(
+        pC_current * env.num_nodes
     )
 
     scores = []
 
     for node in env.nodes:
+        # According to the paper, current fact-checkers are not
+        # candidates during the new boundary-placement step.
+        if node in C_set:
+            continue
+
         fake_neighbors = 0
-        non_fake_neighbors = 0
+        truthful_neighbors = 0
 
         for neighbor in env.graph.neighbors(node):
+            # Fact-checkers are excluded from A/B boundary detection.
             if neighbor in C_set:
                 continue
 
             if opinion[neighbor] == "B":
                 fake_neighbors += 1
-            else:
-                non_fake_neighbors += 1
+            elif opinion[neighbor] == "A":
+                truthful_neighbors += 1
+
+        degree = env.graph.degree(node)
 
         boundary_score = (
-            fake_neighbors * non_fake_neighbors
-        )
+            fake_neighbors * truthful_neighbors
+        ) / (
+            degree + config.boundary_epsilon
+        ) ** 2
 
         scores.append(
             (boundary_score, node)
+        )
+
+    if num_fact_checkers > len(scores):
+        raise RuntimeError(
+            "Not enough eligible nodes for fact-checker placement."
         )
 
     scores.sort(
@@ -208,7 +223,6 @@ def choose_C_boundary(
         )
 
     return selected_nodes
-
 
 def compute_pC_from_B(
     env: SimulationEnvironment,
@@ -383,6 +397,7 @@ def run_upgrade(
 
             C_set = choose_C_boundary(
                 env,
+                config,
                 opinion,
                 C_set,
                 pC_current,
