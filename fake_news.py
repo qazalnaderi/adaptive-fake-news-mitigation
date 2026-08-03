@@ -22,20 +22,32 @@ class SimulationConfig:
     max_fact_checker_ratio: float = 0.35
     adaptive_gain: float = 0.70
 
+@dataclass(frozen=True)
+class SimulationEnvironment:
+    graph: nx.Graph
+    nodes: tuple[int, ...]
+    num_nodes: int
+
+def build_environment(
+    config: SimulationConfig,
+) -> SimulationEnvironment:
+    graph = nx.watts_strogatz_graph(
+        n=config.num_nodes,
+        k=config.neighbors_per_node,
+        p=config.rewiring_probability,
+        seed=config.network_seed,
+    )
+
+    nodes = tuple(graph.nodes())
+
+    return SimulationEnvironment(
+        graph=graph,
+        nodes=nodes,
+        num_nodes=len(nodes),
+    )
 
 CONFIG = SimulationConfig()
-
-
-G = nx.watts_strogatz_graph(
-    n=CONFIG.num_nodes,
-    k=CONFIG.neighbors_per_node,
-    p=CONFIG.rewiring_probability,
-    seed=CONFIG.network_seed,
-)
-
-nodes = list(G.nodes())
-N = len(nodes)
-
+ENV = build_environment(CONFIG)
 
 PAYOFF_MATRIX = {
     "A": {"A": 1, "B": 0, "C": 1},
@@ -56,13 +68,22 @@ def initialize(
 ):
     rng = random.Random(seed)
 
-    opinion = {u: ("A" if rng.random() < 0.5 else "B") for u in nodes}
 
-    nC = int(round(pC0 * N))
+    opinion = {
+    u: ("A" if rng.random() < 0.5 else "B")
+    for u in ENV.nodes
+    }
+
+    nC = int(round(pC0 * ENV.num_nodes))
 
     if mode == "degree":
-        deg = dict(G.degree())
-        ranked = sorted(nodes, key=lambda u: deg[u], reverse=True)
+        deg = dict(ENV.graph.degree())
+
+        ranked = sorted(
+            ENV.nodes,
+            key=lambda u: deg[u],
+            reverse=True,
+        )
         C_set = set(ranked[:nC])
 
     else:
@@ -73,12 +94,12 @@ def initialize(
 
 def avg_payoff(opinion, C_set, u):
     su = strategy(opinion, C_set, u)
-    deg_u = G.degree(u)
+    deg_u = ENV.graph.degree(u)
     if deg_u == 0:
         return 0.0
 
     total = 0.0
-    for v in G.neighbors(u):
+    for v in ENV.graph.neighbors(u):
         sv = strategy(opinion, C_set, v)
         total += PAYOFF_MATRIX[su][sv]
     return total / deg_u
@@ -91,13 +112,13 @@ def choose_C_boundary(opinion, C_set, pC_current):
     Place sanctioners on the boundary of fake-news spread:
     score(v) = (#B neighbors) * (#non-B neighbors)
     """
-    nC = int(round(pC_current * N))
+    nC = int(round(pC_current * ENV.num_nodes))
     scores = []
 
-    for v in nodes:
+    for v in ENV.nodes:
         nb = 0
         nnonb = 0
-        for u in G.neighbors(v):
+        for u in ENV.graph.neighbors(v):
             su = strategy(opinion, C_set, u)
             if su == "B":
                 nb += 1
@@ -112,7 +133,11 @@ def compute_pC_from_B(opinion, C_set):
     """
     Increase pC when fake news level is higher.
     """
-    viable = [u for u in nodes if u not in C_set]
+    viable = [
+        u
+        for u in ENV.nodes
+        if u not in C_set
+    ]
     if not viable:
         return CONFIG.max_fact_checker_ratio
 
@@ -132,11 +157,11 @@ def compute_pC_from_B(opinion, C_set):
 
 
 def step_async(opinion, C_set, rng):
-    u = rng.choice(nodes)
+    u = rng.choice(ENV.nodes)
     if u in C_set:
         return
 
-    neigh = list(G.neighbors(u))
+    neigh = list(ENV.graph.neighbors(u))
     if not neigh:
         return
 
@@ -166,11 +191,21 @@ def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
         step_async(opinion, C_set, rng)
 
         if t % CONFIG.sample_interval == 0:
-            A = sum(1 for u in nodes if (u not in C_set and opinion[u] == "A"))
-            B = sum(1 for u in nodes if (u not in C_set and opinion[u] == "B"))
+            A = sum(
+                1
+                for u in ENV.nodes
+                if u not in C_set and opinion[u] == "A"
+            )
+
+            B = sum(
+                1
+                for u in ENV.nodes
+                if u not in C_set and opinion[u] == "B"
+            )
+
             histA.append(A)
             histB.append(B)
-            hist_pC.append(len(C_set) / N)
+            hist_pC.append(len(C_set) / ENV.num_nodes)
 
     return histA, histB, hist_pC
 
@@ -191,11 +226,23 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
         step_async(opinion, C_set, rng)
 
         if t % CONFIG.sample_interval == 0:
-            A = sum(1 for u in nodes if (u not in C_set and opinion[u] == "A"))
-            B = sum(1 for u in nodes if (u not in C_set and opinion[u] == "B"))
+            A = sum(
+                1
+                for u in ENV.nodes
+                if u not in C_set and opinion[u] == "A"
+            )
+
+            B = sum(
+                1
+                for u in ENV.nodes
+                if u not in C_set and opinion[u] == "B"
+            )
+
             histA.append(A)
             histB.append(B)
-            hist_pC.append(len(C_set) / N)
+            hist_pC.append(
+                len(C_set) / ENV.num_nodes
+            )
 
     return histA, histB, hist_pC
 
