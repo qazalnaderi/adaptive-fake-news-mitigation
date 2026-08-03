@@ -1,11 +1,8 @@
 # Adaptive Boundary-Aware Fact-Checker Placement for Misinformation Suppression in Social Networks
 **Published Paper:**  
-[Adaptive Boundary-Aware Fact-Checker Placement for Misinformation Suppression in Social Networks](https://www.mdpi.com/2076-3417/16/10/4740)
-
-**DOI:**  
-[10.3390/app16104740](https://doi.org/10.3390/app16104740)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+
 A paper-aligned Python implementation of an adaptive, boundary-aware
 fact-checker allocation strategy for misinformation suppression in
 complex social networks.
