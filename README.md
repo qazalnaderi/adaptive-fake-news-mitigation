@@ -1,5 +1,4 @@
 # Adaptive Boundary-Aware Fact-Checker Placement for Misinformation Suppression in Social Networks
-**Published Paper:**  
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 
