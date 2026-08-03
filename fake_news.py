@@ -62,35 +62,35 @@ def strategy(opinion, C_set, u):
     return "C" if u in C_set else opinion[u]
 
 def initialize(
+    env: SimulationEnvironment,
     seed=7,
     pC0=CONFIG.fixed_fact_checker_ratio,
     mode="degree",
 ):
     rng = random.Random(seed)
 
-
     opinion = {
-    u: ("A" if rng.random() < 0.5 else "B")
-    for u in ENV.nodes
+        u: ("A" if rng.random() < 0.5 else "B")
+        for u in env.nodes
     }
 
-    nC = int(round(pC0 * ENV.num_nodes))
+    nC = int(round(pC0 * env.num_nodes))
 
     if mode == "degree":
-        deg = dict(ENV.graph.degree())
+        degrees = dict(env.graph.degree())
 
         ranked = sorted(
-            ENV.nodes,
-            key=lambda u: deg[u],
+            env.nodes,
+            key=lambda u: degrees[u],
             reverse=True,
         )
+
         C_set = set(ranked[:nC])
 
     else:
-        raise ValueError("Unknown mode")
+        raise ValueError(f"Unknown placement mode: {mode}")
 
     return opinion, C_set
-
 
 def avg_payoff(opinion, C_set, u):
     su = strategy(opinion, C_set, u)
@@ -179,6 +179,7 @@ def step_async(opinion, C_set, rng):
 def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
 
     opinion, C_set = initialize(
+        ENV,
         seed=seed_init,
         pC0=CONFIG.fixed_fact_checker_ratio,
         mode=placement,
@@ -211,7 +212,12 @@ def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
 
 
 def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
-    opinion, C_set = initialize(seed=seed_init, pC0=CONFIG.fixed_fact_checker_ratio, mode=baseline_placement)
+    opinion, C_set = initialize(
+        ENV,
+        seed=seed_init,
+        pC0=CONFIG.fixed_fact_checker_ratio,
+        mode=baseline_placement,
+    )
     rng = random.Random(seed_run)
 
     histA, histB, hist_pC = [], [], []
