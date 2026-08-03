@@ -23,6 +23,7 @@ class SimulationConfig:
     max_fact_checker_ratio: float = 0.50
     adaptive_gain: float = 0.70
     boundary_epsilon: float = 1e-12
+    lasting_correction_probability: float = 0.70
 
 @dataclass(frozen=True)
 class SimulationEnvironment:
@@ -224,6 +225,26 @@ def choose_C_boundary(
 
     return selected_nodes
 
+def apply_lasting_correction(
+    opinion,
+    removed_fact_checkers,
+    correction_probability,
+    rng,
+):
+    """
+    Apply persistent correction to nodes removed from the C-set.
+
+    A removed node with latent opinion B changes permanently to A
+    with the specified probability.
+    """
+    for node in removed_fact_checkers:
+        if (
+            opinion[node] == "B"
+            and rng.random() < correction_probability
+        ):
+            opinion[node] = "A"
+
+
 def compute_pC_from_B(
     env: SimulationEnvironment,
     config: SimulationConfig,
@@ -380,6 +401,10 @@ def run_upgrade(
 
     rng = random.Random(seed_run)
 
+    correction_rng = random.Random(
+        seed_run + 1_000_000
+    )
+
     histA = []
     histB = []
     hist_pC = []
@@ -395,7 +420,7 @@ def run_upgrade(
                 C_set,
             )
 
-            C_set = choose_C_boundary(
+            new_C_set = choose_C_boundary(
                 env,
                 config,
                 opinion,
@@ -403,6 +428,17 @@ def run_upgrade(
                 pC_current,
             )
 
+            removed_fact_checkers = C_set - new_C_set
+
+            apply_lasting_correction(
+                opinion,
+                removed_fact_checkers,
+                config.lasting_correction_probability,
+                correction_rng,
+            )
+
+            C_set = new_C_set
+            
         step_async(
             env,
             config,
