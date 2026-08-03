@@ -324,63 +324,75 @@ def run_baseline_targeted(
     return histA, histB, hist_pC
 
 
-def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
+def run_upgrade(
+    env: SimulationEnvironment,
+    config: SimulationConfig,
+    seed_init=7,
+    seed_run=11,
+    baseline_placement="degree",
+):
     opinion, C_set = initialize(
-        ENV,
+        env,
         seed=seed_init,
-        pC0=CONFIG.fixed_fact_checker_ratio,
+        pC0=config.fixed_fact_checker_ratio,
         mode=baseline_placement,
     )
+
     rng = random.Random(seed_run)
 
-    histA, histB, hist_pC = [], [], []
+    histA = []
+    histB = []
+    hist_pC = []
 
-    pC_current = CONFIG.fixed_fact_checker_ratio
+    pC_current = config.fixed_fact_checker_ratio
 
-    for t in range(CONFIG.steps):
-        if t % CONFIG.control_interval == 0:
+    for t in range(config.steps):
+        if t % config.control_interval == 0:
             pC_current = compute_pC_from_B(
-                ENV,
-                CONFIG,
+                env,
+                config,
                 opinion,
                 C_set,
             )
+
             C_set = choose_C_boundary(
-                ENV,
+                env,
                 opinion,
                 C_set,
                 pC_current,
             )
 
         step_async(
-            ENV,
-            CONFIG,
+            env,
+            config,
             opinion,
             C_set,
             rng,
         )
 
-        if t % CONFIG.sample_interval == 0:
-            A = sum(
+        if t % config.sample_interval == 0:
+            true_news_count = sum(
                 1
-                for u in ENV.nodes
-                if u not in C_set and opinion[u] == "A"
+                for node in env.nodes
+                if node not in C_set
+                and opinion[node] == "A"
             )
 
-            B = sum(
+            fake_news_count = sum(
                 1
-                for u in ENV.nodes
-                if u not in C_set and opinion[u] == "B"
+                for node in env.nodes
+                if node not in C_set
+                and opinion[node] == "B"
             )
 
-            histA.append(A)
-            histB.append(B)
+            histA.append(true_news_count)
+            histB.append(fake_news_count)
+
             hist_pC.append(
-                len(C_set) / ENV.num_nodes
+                len(C_set) / env.num_nodes
             )
 
     return histA, histB, hist_pC
-
 
 PLACEMENT = "degree"  
 
@@ -389,7 +401,11 @@ A_base, B_base, p_base = run_baseline_targeted(
     CONFIG,
     placement=PLACEMENT,
 )
-A_up,   B_up,   p_up   = run_upgrade(baseline_placement=PLACEMENT)
+A_up, B_up, p_up = run_upgrade(
+    ENV,
+    CONFIG,
+    baseline_placement=PLACEMENT,
+)
 
 plt.figure(figsize=(12, 5))
 
