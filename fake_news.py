@@ -5,14 +5,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-G = nx.watts_strogatz_graph(n=120, k=6, p=0.1, seed=1)
+G = nx.watts_strogatz_graph(n=200, k=6, p=0.1, seed=1)
 nodes = list(G.nodes())
 N = len(nodes)
 
 
-beta = 0.5
-steps = 4000
-T = 50
+beta = 0.6
+steps = 2000
+T = 60
 
 payoff = {
     "A": {"A": 1, "B": 0, "C": 1},
@@ -20,12 +20,11 @@ payoff = {
     "C": {"A": 0, "B": 0, "C": 0},
 }
 
-pC_fixed = 0.20
+pC_fixed = 0.25
 
 p_min = 0.05
 p_max = 0.35
-k_gain = 0.90
-
+k_gain = 0.70
 
 def clip(x, lo, hi):
     return max(lo, min(hi, x))
@@ -33,11 +32,11 @@ def clip(x, lo, hi):
 def strategy(opinion, C_set, u):
     return "C" if u in C_set else opinion[u]
 
-def initialize(seed=7, pC0=0.2, mode="degree"):
+def initialize(seed=7, pC0=0.25, mode="degree"):
     rng = random.Random(seed)
 
     opinion = {u: ("A" if rng.random() < 0.5 else "B") for u in nodes}
-    # 0.2*120=24
+
     nC = int(round(pC0 * N))
 
     if mode == "degree":
