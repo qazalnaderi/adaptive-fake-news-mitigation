@@ -190,7 +190,7 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
 
         step_async(opinion, C_set, rng)
 
-        if t % 20 == 0:
+        if t % CONFIG.sample_interval == 0:
             A = sum(1 for u in nodes if (u not in C_set and opinion[u] == "A"))
             B = sum(1 for u in nodes if (u not in C_set and opinion[u] == "B"))
             histA.append(A)
