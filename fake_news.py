@@ -394,48 +394,77 @@ def run_upgrade(
 
     return histA, histB, hist_pC
 
-PLACEMENT = "degree"  
 
-A_base, B_base, p_base = run_baseline_targeted(
-    ENV,
-    CONFIG,
-    placement=PLACEMENT,
-)
-A_up, B_up, p_up = run_upgrade(
-    ENV,
-    CONFIG,
-    baseline_placement=PLACEMENT,
-)
+def main():
+    placement = "degree"
 
-plt.figure(figsize=(12, 5))
+    A_base, B_base, p_base = run_baseline_targeted(
+        ENV,
+        CONFIG,
+        placement=placement,
+    )
 
-plt.subplot(1, 3, 1)
-plt.plot(A_base, label="A (baseline-targeted)")
-plt.plot(B_base, label="B (baseline-targeted)")
-plt.title(f"Baseline: Targeted fixed C ({PLACEMENT})")
-plt.xlabel("Time")
-plt.ylabel("Count among non-C")
-plt.legend()
-plt.grid(True, linewidth=0.3)
+    A_up, B_up, p_up = run_upgrade(
+        ENV,
+        CONFIG,
+        baseline_placement=placement,
+    )
 
-plt.subplot(1, 3, 2)
-plt.plot(A_up, label="A (upgrade)")
-plt.plot(B_up, label="B (upgrade)")
-plt.title("UPGRADE: pC(t) + boundary placement")
-plt.xlabel("Time")
-plt.ylabel("Count among non-C")
-plt.legend()
-plt.grid(True, linewidth=0.3)
+    plt.figure(figsize=(12, 5))
 
-plt.subplot(1, 3, 3)
-plt.plot(p_base, label="pC baseline (fixed)")
-plt.plot(p_up, label="pC upgrade (adaptive)")
-plt.title("pC(t) comparison")
-plt.xlabel("Time")
-plt.ylabel("pC")
-plt.ylim(0, 0.6)
-plt.legend()
-plt.grid(True, linewidth=0.3)
+    plt.subplot(1, 3, 1)
+    plt.plot(
+        A_base,
+        label="A (baseline-targeted)",
+    )
+    plt.plot(
+        B_base,
+        label="B (baseline-targeted)",
+    )
+    plt.title(
+        f"Baseline: Targeted fixed C ({placement})"
+    )
+    plt.xlabel("Time")
+    plt.ylabel("Count among non-C")
+    plt.legend()
+    plt.grid(True, linewidth=0.3)
 
-plt.tight_layout()
-plt.show()
+    plt.subplot(1, 3, 2)
+    plt.plot(
+        A_up,
+        label="A (upgrade)",
+    )
+    plt.plot(
+        B_up,
+        label="B (upgrade)",
+    )
+    plt.title(
+        "UPGRADE: pC(t) + boundary placement"
+    )
+    plt.xlabel("Time")
+    plt.ylabel("Count among non-C")
+    plt.legend()
+    plt.grid(True, linewidth=0.3)
+
+    plt.subplot(1, 3, 3)
+    plt.plot(
+        p_base,
+        label="pC baseline (fixed)",
+    )
+    plt.plot(
+        p_up,
+        label="pC upgrade (adaptive)",
+    )
+    plt.title("pC(t) comparison")
+    plt.xlabel("Time")
+    plt.ylabel("pC")
+    plt.ylim(0, 0.6)
+    plt.legend()
+    plt.grid(True, linewidth=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
