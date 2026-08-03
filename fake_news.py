@@ -151,7 +151,9 @@ def choose_C_boundary(
     Place fact-checkers on the boundary between fake-news
     and non-fake-news regions.
 
-    score(v) = (# B neighbors) * (# non-B neighbors)
+    score(v) = (# B neighbors) * (# A neighbors)
+
+    Current fact-checkers are excluded from boundary detection.
     """
     num_fact_checkers = int(
         round(pC_current * env.num_nodes)
@@ -164,13 +166,10 @@ def choose_C_boundary(
         non_fake_neighbors = 0
 
         for neighbor in env.graph.neighbors(node):
-            neighbor_strategy = strategy(
-                opinion,
-                C_set,
-                neighbor,
-            )
+            if neighbor in C_set:
+                continue
 
-            if neighbor_strategy == "B":
+            if opinion[neighbor] == "B":
                 fake_neighbors += 1
             else:
                 non_fake_neighbors += 1
@@ -192,6 +191,14 @@ def choose_C_boundary(
         node
         for _, node in scores[:num_fact_checkers]
     }
+
+    if len(selected_nodes) != num_fact_checkers:
+        raise RuntimeError(
+            "Boundary placement selected an unexpected "
+            "number of fact-checkers."
+        )
+
+
 
     return selected_nodes
 
