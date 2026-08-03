@@ -180,37 +180,51 @@ def compute_pC_from_B(opinion, C_set):
     )
 
 
-def step_async(opinion, C_set, rng):
-    u = rng.choice(ENV.nodes)
+
+def step_async(
+    env: SimulationEnvironment,
+    config: SimulationConfig,
+    opinion,
+    C_set,
+    rng,
+):
+    u = rng.choice(env.nodes)
+
     if u in C_set:
         return
 
-    neigh = list(ENV.graph.neighbors(u))
-    if not neigh:
+    neighbors = list(env.graph.neighbors(u))
+
+    if not neighbors:
         return
 
     weights = np.array(
         [
             fitness(
-                ENV,
-                CONFIG,
+                env,
+                config,
                 opinion,
                 C_set,
-                v,
+                neighbor,
             )
-            for v in neigh
+            for neighbor in neighbors
         ],
         dtype=float,
     )
+
     if weights.sum() <= 0:
         return
 
-    v = rng.choices(neigh, weights=weights, k=1)[0]
-    if v in C_set:
+    selected_neighbor = rng.choices(
+        neighbors,
+        weights=weights,
+        k=1,
+    )[0]
+
+    if selected_neighbor in C_set:
         return
 
-    opinion[u] = opinion[v]
-
+    opinion[u] = opinion[selected_neighbor]
 
 def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
 
@@ -225,7 +239,13 @@ def run_baseline_targeted(seed_init=7, seed_run=11, placement="degree"):
     histA, histB, hist_pC = [], [], []
 
     for t in range(CONFIG.steps):
-        step_async(opinion, C_set, rng)
+        step_async(
+            ENV,
+            CONFIG,
+            opinion,
+            C_set,
+            rng,
+        )
 
         if t % CONFIG.sample_interval == 0:
             A = sum(
@@ -265,7 +285,13 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
             pC_current = compute_pC_from_B(opinion, C_set)
             C_set = choose_C_boundary(opinion, C_set, pC_current)
 
-        step_async(opinion, C_set, rng)
+        step_async(
+            ENV,
+            CONFIG,
+            opinion,
+            C_set,
+            rng,
+        )
 
         if t % CONFIG.sample_interval == 0:
             A = sum(
