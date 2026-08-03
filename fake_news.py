@@ -76,19 +76,29 @@ def initialize(
 
     nC = int(round(pC0 * env.num_nodes))
 
-    if mode == "degree":
+    if mode == "random":
+        C_set = set(
+            rng.sample(
+                list(env.nodes),
+                nC,
+            )
+        )
+
+    elif mode == "degree":
         degrees = dict(env.graph.degree())
 
         ranked = sorted(
             env.nodes,
-            key=lambda u: degrees[u],
+            key=lambda node: degrees[node],
             reverse=True,
         )
 
         C_set = set(ranked[:nC])
 
     else:
-        raise ValueError(f"Unknown placement mode: {mode}")
+        raise ValueError(
+            f"Unknown placement mode: {mode}"
+        )
 
     return opinion, C_set
 
@@ -396,7 +406,7 @@ def run_upgrade(
 
 
 def main():
-    placement = "degree"
+    placement = "random"
 
     A_base, B_base, p_base = run_baseline_targeted(
         ENV,
@@ -415,14 +425,15 @@ def main():
     plt.subplot(1, 3, 1)
     plt.plot(
         A_base,
-        label="A (baseline-targeted)",
+        label="A (static baseline)",
     )
+
     plt.plot(
         B_base,
-        label="B (baseline-targeted)",
+        label="B (static baseline)",
     )
     plt.title(
-        f"Baseline: Targeted fixed C ({placement})"
+        "Static baseline: fixed random fact-checkers"
     )
     plt.xlabel("Time")
     plt.ylabel("Count among non-C")
