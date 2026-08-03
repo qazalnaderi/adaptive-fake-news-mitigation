@@ -92,20 +92,44 @@ def initialize(
 
     return opinion, C_set
 
-def avg_payoff(opinion, C_set, u):
+def avg_payoff(
+    env: SimulationEnvironment,
+    opinion,
+    C_set,
+    u,
+):
     su = strategy(opinion, C_set, u)
-    deg_u = ENV.graph.degree(u)
+
+    deg_u = env.graph.degree(u)
     if deg_u == 0:
         return 0.0
 
     total = 0.0
-    for v in ENV.graph.neighbors(u):
+
+    for v in env.graph.neighbors(u):
         sv = strategy(opinion, C_set, v)
         total += PAYOFF_MATRIX[su][sv]
+
     return total / deg_u
 
-def fitness(opinion, C_set, u):
-    return math.exp(CONFIG.beta * avg_payoff(opinion, C_set, u))
+
+def fitness(
+    env: SimulationEnvironment,
+    config: SimulationConfig,
+    opinion,
+    C_set,
+    u,
+):
+    payoff_value = avg_payoff(
+        env,
+        opinion,
+        C_set,
+        u,
+    )
+
+    return math.exp(
+        config.beta * payoff_value
+    )
 
 def choose_C_boundary(opinion, C_set, pC_current):
     """
@@ -165,7 +189,19 @@ def step_async(opinion, C_set, rng):
     if not neigh:
         return
 
-    weights = np.array([fitness(opinion, C_set, v) for v in neigh], dtype=float)
+    weights = np.array(
+        [
+            fitness(
+                ENV,
+                CONFIG,
+                opinion,
+                C_set,
+                v,
+            )
+            for v in neigh
+        ],
+        dtype=float,
+    )
     if weights.sum() <= 0:
         return
 
