@@ -153,32 +153,45 @@ def choose_C_boundary(opinion, C_set, pC_current):
     scores.sort(reverse=True, key=lambda x: x[0])
     return set(v for _, v in scores[:nC])
 
-def compute_pC_from_B(opinion, C_set):
+
+def compute_pC_from_B(
+    env: SimulationEnvironment,
+    config: SimulationConfig,
+    opinion,
+    C_set,
+):
     """
-    Increase pC when fake news level is higher.
+    Increase the fact-checker ratio when fake-news prevalence rises.
     """
-    viable = [
+    viable_nodes = [
         u
-        for u in ENV.nodes
+        for u in env.nodes
         if u not in C_set
     ]
-    if not viable:
-        return CONFIG.max_fact_checker_ratio
 
-    B_count = sum(1 for u in viable if opinion[u] == "B")
-    B_frac = B_count / len(viable)
+    if not viable_nodes:
+        return config.max_fact_checker_ratio
 
-    pC_new = (
-        CONFIG.min_fact_checker_ratio
-        + CONFIG.adaptive_gain * B_frac
+    fake_news_count = sum(
+        1
+        for u in viable_nodes
+        if opinion[u] == "B"
+    )
+
+    fake_news_ratio = (
+        fake_news_count / len(viable_nodes)
+    )
+
+    new_ratio = (
+        config.min_fact_checker_ratio
+        + config.adaptive_gain * fake_news_ratio
     )
 
     return clip(
-        pC_new,
-        CONFIG.min_fact_checker_ratio,
-        CONFIG.max_fact_checker_ratio,
+        new_ratio,
+        config.min_fact_checker_ratio,
+        config.max_fact_checker_ratio,
     )
-
 
 
 def step_async(
@@ -282,7 +295,12 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
 
     for t in range(CONFIG.steps):
         if t % CONFIG.control_interval == 0:
-            pC_current = compute_pC_from_B(opinion, C_set)
+            pC_current = compute_pC_from_B(
+                ENV,
+                CONFIG,
+                opinion,
+                C_set,
+            )
             C_set = choose_C_boundary(opinion, C_set, pC_current)
 
         step_async(
