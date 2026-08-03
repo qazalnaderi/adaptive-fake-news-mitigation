@@ -292,14 +292,24 @@ def step_async(
     C_set,
     rng,
 ):
-    u = rng.choice(env.nodes)
+    eligible_nodes = [
+        node
+        for node in env.nodes
+        if node not in C_set
+    ]
 
-    if u in C_set:
+    if not eligible_nodes:
         return
 
-    neighbors = list(env.graph.neighbors(u))
+    node = rng.choice(eligible_nodes)
 
-    if not neighbors:
+    eligible_neighbors = [
+        neighbor
+        for neighbor in env.graph.neighbors(node)
+        if neighbor not in C_set
+    ]
+
+    if not eligible_neighbors:
         return
 
     weights = np.array(
@@ -311,25 +321,26 @@ def step_async(
                 C_set,
                 neighbor,
             )
-            for neighbor in neighbors
+            for neighbor in eligible_neighbors
         ],
         dtype=float,
     )
 
-    if weights.sum() <= 0:
+    total_weight = weights.sum()
+
+    if (
+        not np.isfinite(total_weight)
+        or total_weight <= 0
+    ):
         return
 
     selected_neighbor = rng.choices(
-        neighbors,
+        eligible_neighbors,
         weights=weights,
         k=1,
     )[0]
 
-    if selected_neighbor in C_set:
-        return
-
-    opinion[u] = opinion[selected_neighbor]
-
+    opinion[node] = opinion[selected_neighbor]
 
 def run_baseline_targeted(
     env: SimulationEnvironment,
@@ -438,7 +449,7 @@ def run_upgrade(
             )
 
             C_set = new_C_set
-            
+
         step_async(
             env,
             config,
