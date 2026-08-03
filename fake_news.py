@@ -131,28 +131,59 @@ def fitness(
         config.beta * payoff_value
     )
 
-def choose_C_boundary(opinion, C_set, pC_current):
+def choose_C_boundary(
+    env: SimulationEnvironment,
+    opinion,
+    C_set,
+    pC_current,
+):
     """
-    Place sanctioners on the boundary of fake-news spread:
-    score(v) = (#B neighbors) * (#non-B neighbors)
+    Place fact-checkers on the boundary between fake-news
+    and non-fake-news regions.
+
+    score(v) = (# B neighbors) * (# non-B neighbors)
     """
-    nC = int(round(pC_current * ENV.num_nodes))
+    num_fact_checkers = int(
+        round(pC_current * env.num_nodes)
+    )
+
     scores = []
 
-    for v in ENV.nodes:
-        nb = 0
-        nnonb = 0
-        for u in ENV.graph.neighbors(v):
-            su = strategy(opinion, C_set, u)
-            if su == "B":
-                nb += 1
+    for node in env.nodes:
+        fake_neighbors = 0
+        non_fake_neighbors = 0
+
+        for neighbor in env.graph.neighbors(node):
+            neighbor_strategy = strategy(
+                opinion,
+                C_set,
+                neighbor,
+            )
+
+            if neighbor_strategy == "B":
+                fake_neighbors += 1
             else:
-                nnonb += 1
-        scores.append((nb * nnonb, v))
+                non_fake_neighbors += 1
 
-    scores.sort(reverse=True, key=lambda x: x[0])
-    return set(v for _, v in scores[:nC])
+        boundary_score = (
+            fake_neighbors * non_fake_neighbors
+        )
 
+        scores.append(
+            (boundary_score, node)
+        )
+
+    scores.sort(
+        key=lambda item: item[0],
+        reverse=True,
+    )
+
+    selected_nodes = {
+        node
+        for _, node in scores[:num_fact_checkers]
+    }
+
+    return selected_nodes
 
 def compute_pC_from_B(
     env: SimulationEnvironment,
@@ -301,7 +332,12 @@ def run_upgrade(seed_init=7, seed_run=11, baseline_placement="degree"):
                 opinion,
                 C_set,
             )
-            C_set = choose_C_boundary(opinion, C_set, pC_current)
+            C_set = choose_C_boundary(
+                ENV,
+                opinion,
+                C_set,
+                pC_current,
+            )
 
         step_async(
             ENV,
