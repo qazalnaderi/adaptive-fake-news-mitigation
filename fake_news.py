@@ -5,6 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class SimulationConfig:
     num_nodes: int = 200
@@ -22,11 +23,13 @@ class SimulationConfig:
     max_fact_checker_ratio: float = 0.50
     adaptive_gain: float = 0.70
 
+
 @dataclass(frozen=True)
 class SimulationEnvironment:
     graph: nx.Graph
     nodes: tuple[int, ...]
     num_nodes: int
+
 
 def build_environment(
     config: SimulationConfig,
@@ -46,6 +49,7 @@ def build_environment(
         num_nodes=len(nodes),
     )
 
+
 CONFIG = SimulationConfig()
 ENV = build_environment(CONFIG)
 
@@ -55,11 +59,14 @@ PAYOFF_MATRIX = {
     "C": {"A": 0, "B": 0, "C": 0},
 }
 
+
 def clip(x, lo, hi):
     return max(lo, min(hi, x))
 
+
 def strategy(opinion, C_set, u):
     return "C" if u in C_set else opinion[u]
+
 
 def initialize(
     env: SimulationEnvironment,
@@ -102,6 +109,7 @@ def initialize(
 
     return opinion, C_set
 
+
 def avg_payoff(
     env: SimulationEnvironment,
     opinion,
@@ -140,6 +148,7 @@ def fitness(
     return math.exp(
         config.beta * payoff_value
     )
+
 
 def choose_C_boundary(
     env: SimulationEnvironment,
@@ -198,9 +207,8 @@ def choose_C_boundary(
             "number of fact-checkers."
         )
 
-
-
     return selected_nodes
+
 
 def compute_pC_from_B(
     env: SimulationEnvironment,
@@ -286,6 +294,7 @@ def step_async(
         return
 
     opinion[u] = opinion[selected_neighbor]
+
 
 def run_baseline_targeted(
     env: SimulationEnvironment,
