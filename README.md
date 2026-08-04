@@ -101,13 +101,6 @@ git clone https://github.com/qazalnaderi/adaptive-fact-checker-placement.git
 cd adaptive-fact-checker-placement
 ```
 
-If the repository still uses its previous name, use:
-
-```bash
-git clone https://github.com/qazalnaderi/adaptive-fake-news-mitigation.git
-cd adaptive-fake-news-mitigation
-```
-
 ### Create a Virtual Environment
 
 #### Windows PowerShell
@@ -197,6 +190,7 @@ The following figure shows an illustrative single-seed comparison on a Watts–S
 
 This figure represents one stochastic run. Quantitative conclusions should be based on the aggregated multi-seed experiment rather than a single simulation.
 
+
 ## Reproducibility Results
 
 The stored 30-seed experimental output is available at:
@@ -222,9 +216,13 @@ For each experiment seed, the baseline and adaptive models use:
 - The same initial latent opinions
 - Separate stochastic dynamics streams
 
-Because the simulation is stochastic, results should be evaluated using aggregated statistics across multiple independent seeds.
+The stored outputs were generated using the default configuration included in this repository.
 
-Exact agreement with every numerical result in the published article may depend on additional implementation and analysis details that are not yet included in this repository.
+## Key Observation
+
+Across the stored experiments, the adaptive intervention frequently reduced the final misinformation count to zero or near zero while using an average fact-checker budget of approximately 0.08. In comparison, the static baseline used a fixed fact-checker ratio of 0.25.
+
+These results suggest that the adaptive strategy can achieve stronger misinformation suppression with a substantially lower average intervention budget. However, formal conclusions require aggregated statistical analysis, budget-matched comparisons, and ablation experiments.
 
 ## Project Structure
 
