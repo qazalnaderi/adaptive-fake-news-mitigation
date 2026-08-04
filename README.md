@@ -207,6 +207,11 @@ The CSV includes results for:
 
 The stored outputs were generated using the default configuration included in this repository.
 
+## Key Observation
+
+Across the stored experiments, the adaptive intervention frequently reduced the final misinformation count to zero or near zero while using an average fact-checker budget of approximately 0.08. In comparison, the static baseline used a fixed fact-checker ratio of 0.25.
+
+These results suggest that the adaptive strategy can achieve stronger misinformation suppression with a substantially lower average intervention budget. However, formal conclusions require aggregated statistical analysis, budget-matched comparisons, and ablation experiments.
 ## Reproducibility Notes
 
 For each experiment seed, the baseline and adaptive models use:
@@ -217,12 +222,6 @@ For each experiment seed, the baseline and adaptive models use:
 - Separate stochastic dynamics streams
 
 The stored outputs were generated using the default configuration included in this repository.
-
-## Key Observation
-
-Across the stored experiments, the adaptive intervention frequently reduced the final misinformation count to zero or near zero while using an average fact-checker budget of approximately 0.08. In comparison, the static baseline used a fixed fact-checker ratio of 0.25.
-
-These results suggest that the adaptive strategy can achieve stronger misinformation suppression with a substantially lower average intervention budget. However, formal conclusions require aggregated statistical analysis, budget-matched comparisons, and ablation experiments.
 
 ## Project Structure
 
