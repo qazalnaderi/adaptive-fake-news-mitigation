@@ -231,7 +231,6 @@ Exact agreement with every numerical result in the published article may depend 
 ```text
 adaptive-fact-checker-placement/
 ├── fake_news.py
-├── README.md
 ├── requirements.txt
 └── results/
     ├── README.md
