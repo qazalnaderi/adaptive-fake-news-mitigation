@@ -282,6 +282,7 @@ For the complete author-contribution statement, refer to the published article.
 
 ## License
 
-A software license has not yet been specified.
+This project is licensed under the [MIT License](LICENSE).
 
-Before reusing or redistributing the code, please contact the repository maintainer or consult the license file once it is added.
+The associated publication remains subject to the publisher's copyright and
+licensing terms.
